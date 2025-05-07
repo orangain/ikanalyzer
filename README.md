@@ -51,7 +51,7 @@ brew install tesseract tesseract-lang
 ```
 git clone https://github.com/orangain/ikanalyzer
 cd ikanalyzer
-uv install
+uv sync
 ```
 
 ## Usage / 使い方
