@@ -98,10 +98,25 @@ class Classifier:
 if __name__ == "__main__":
     import sys
 
-    image_path = sys.argv[1]
-    classifier = Classifier(
-        model_path=os.path.join("classifiers", "weapon_classifier.pth")
-    )
-    image = cv2.imread(image_path)
-    result = classifier.predict(image)
-    print(f"Predicted: {result}")
+    model_path = os.path.join("classifiers", "weapon_classifier.pth")
+
+    command = sys.argv[1] if len(sys.argv) > 1 else None
+    if command == "train":
+        dataset_path = os.environ["WEAPON_DATASET_PATH"]
+        train_model(dataset_path=dataset_path, save_path=model_path)
+    elif command == "predict":
+        image_path = sys.argv[2]
+        classifier = Classifier(model_path)
+        image = cv2.imread(image_path)
+        result = classifier.predict(image)
+        print(f"Predicted: {result}")
+    else:
+        print(
+            """
+Usage:
+    WEAPON_DATASET_PATH=... python classifier.py train
+    python classifier.py predict <image_path>
+""",
+            file=sys.stderr,
+        )
+        sys.exit(1)
