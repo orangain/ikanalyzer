@@ -1,3 +1,5 @@
+import dataclasses
+import multiprocessing
 import os
 import subprocess
 import sys
@@ -21,10 +23,14 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-def process_video(video_path: str):
-    # 1秒あたり何枚取り出すか
-    frames_per_second = 3
+@dataclasses.dataclass
+class Arg:
+    video_path: str
+    output_dir: str
+    frames_per_second: int
 
+
+def process_video(arg: Arg):
     saved_count = 0
     last_frame_type: str | None = None
     start_frame: VideoFrame | None = None
@@ -33,16 +39,18 @@ def process_video(video_path: str):
         nonlocal saved_count
         if start_frame is not None and (frame.second - start_frame.second) > 10:
             write_movie(
+                arg.output_dir,
+                arg.video_path,
                 start_frame.frame_number,
                 start_frame.second - 1.0,
                 frame.second + end_frame_adjust_seconds,
             )
             saved_count += 1
 
-    video = read_video(video_path)
-    logger.info(f"Video loaded: {video_path}, fps: {video.fps}")
+    video = read_video(arg.video_path)
+    logger.info(f"Video loaded: {arg.video_path}, fps: {video.fps}")
 
-    for frame in video.frames(frames_per_second):
+    for frame in video.frames(arg.frames_per_second):
         matched_frame_type = process_frame(frame.image, frame.frame_number)
 
         if matched_frame_type != None and matched_frame_type != last_frame_type:
@@ -82,7 +90,11 @@ def process_frame(frame: cv2.typing.MatLike, frame_number: int) -> str | None:
 
 
 def write_movie(
-    start_frame_number: int, start_frame_second: float, end_frame_second: float
+    output_dir: str,
+    video_path: str,
+    start_frame_number: int,
+    start_frame_second: float,
+    end_frame_second: float,
 ):
     video_filename = os.path.basename(video_path)
     video_name, ext = os.path.splitext(video_filename)
@@ -111,12 +123,23 @@ def write_movie(
     logger.info(f"Movie written: {output_path}")
 
 
-# 動画ファイルのパス
-video_paths = sys.argv[1:]
+if __name__ == "__main__":
+    # 動画ファイルのパス
+    video_paths = sys.argv[1:]
+    # フレーム保存先
+    output_dir = os.path.join("workspace", "videos")
+    # 1秒あたり何枚取り出すか
+    frames_per_second = 3
 
-# フレーム保存先
-output_dir = os.path.join("workspace", "videos")
-os.makedirs(output_dir, exist_ok=True)
+    os.makedirs(output_dir, exist_ok=True)
 
-for video_path in video_paths:
-    process_video(video_path)
+    num_processes = max(os.process_cpu_count() // 2, 1)
+    logger.info(f"Using up to {num_processes} processes.")
+
+    args = [
+        Arg(video_path=video_path, output_dir=output_dir, frames_per_second=3)
+        for video_path in video_paths
+    ]
+
+    with multiprocessing.Pool(processes=num_processes) as pool:
+        pool.map(process_video, args)
