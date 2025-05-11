@@ -298,7 +298,7 @@ uv run export_results.py RESULT_FILE... -o OUTPUT_DIR
 `RESULT_FILE`には、分析結果を含むディレクトリまたは `result.json` のパスを指定します。次のように複数のパスを指定することもできます。
 
 ```
-uv run export_results.py workspace/event_frames/* -o workspce/results
+uv run export_results.py workspace/event_frames/* -o workspace/results
 ```
 
 `OUTPUT_DIR`には、出力先のディレクトリを指定します。指定したディレクトリが存在しない場合は自動で作成されます。
