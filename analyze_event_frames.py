@@ -62,19 +62,24 @@ weapon_classifier = Classifier(
 )
 
 
-def process_directory(directory_path: str):
-    logger.info(f"Processing directory: {directory_path}")
+@dataclasses.dataclass
+class Arg:
+    directory_path: str
+
+
+def process_directory(arg: Arg):
+    logger.info(f"Processing directory: {arg.directory_path}")
     frames_dict = {}
 
-    metadata = read_metadata(os.path.join(directory_path, "metadata.json"))
+    metadata = read_metadata(os.path.join(arg.directory_path, "metadata.json"))
     fps = metadata["fps"]
 
-    for filename in sorted(os.listdir(directory_path)):
+    for filename in sorted(os.listdir(arg.directory_path)):
         match = frame_file_re.search(filename)
         if match:
             frame_number = int(match.group(1))
             frame_type = match.group(2)
-            image_path = os.path.join(directory_path, filename)
+            image_path = os.path.join(arg.directory_path, filename)
             image = cv2.imread(image_path)
 
             frame = VideoFrame(
@@ -100,7 +105,7 @@ def process_directory(directory_path: str):
         result_lobby_frame=(
             result_lobby_frames[0] if len(result_lobby_frames) > 0 else None
         ),
-        directory_path=directory_path,
+        directory_path=arg.directory_path,
     )
 
 
@@ -721,5 +726,7 @@ if __name__ == "__main__":
     num_processes = os.process_cpu_count()
     logger.info(f"Using up to {num_processes} processes.")
 
+    args = [Arg(directory_path) for directory_path in directory_paths]
+
     with multiprocessing.Pool(processes=num_processes) as pool:
-        pool.map(process_directory, directory_paths)
+        pool.map(process_directory, args)
