@@ -44,14 +44,17 @@ class OtherFrame:
 type EventFrame = KillFrame | OtherFrame
 
 
-def process_video(video_path: str):
-    output_dir = os.path.join("workspace", "event_frames")
-    # 1秒あたり何枚取り出すか
-    frames_per_second = 3
+@dataclasses.dataclass
+class Arg:
+    video_path: str
+    output_dir: str
+    frames_per_second: int
 
-    video_filename = os.path.basename(video_path)
+
+def process_video(arg: Arg):
+    video_filename = os.path.basename(arg.video_path)
     video_name = os.path.splitext(video_filename)[0]
-    frame_output_dir = os.path.join(output_dir, video_name)
+    frame_output_dir = os.path.join(arg.output_dir, video_name)
     if os.path.exists(frame_output_dir):
         logger.info(
             f"Skipping {video_filename} because its output directory {frame_output_dir} already exists."
@@ -79,12 +82,12 @@ def process_video(video_path: str):
         cv2.imwrite(filename, frame.image)
         saved_count += 1
 
-    video = read_video(video_path)
-    logger.info(f"Video loaded: {video_path}, fps: {video.fps}")
+    video = read_video(arg.video_path)
+    logger.info(f"Video loaded: {arg.video_path}, fps: {video.fps}")
 
     write_metadata(os.path.join(frame_output_dir, "metadata.json"), video)
 
-    for frame in video.frames(frames_per_second):
+    for frame in video.frames(arg.frames_per_second):
         matched_frame = detect_frame_type(frame)
 
         if matched_frame is None:
@@ -213,8 +216,21 @@ if __name__ == "__main__":
             logger.info(f"match: {match}")
         exit(0)
 
+    output_dir = os.path.join("workspace", "event_frames")
+    # 1秒あたり何枚取り出すか
+    frames_per_second = 3
+
     num_processes = max(os.process_cpu_count() // 2, 1)
     logger.info(f"Using up to {num_processes} processes.")
 
+    args = [
+        Arg(
+            video_path=video_path,
+            output_dir=output_dir,
+            frames_per_second=frames_per_second,
+        )
+        for video_path in video_paths
+    ]
+
     with multiprocessing.Pool(processes=num_processes) as pool:
-        pool.map(process_video, video_paths)
+        pool.map(process_video, args)
