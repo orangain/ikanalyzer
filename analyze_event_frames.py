@@ -33,7 +33,7 @@ from ikanalyzer.matcher import (
     most_similar_matcher_index,
 )
 from ikanalyzer.splatoon import Weapon, weapons_by_path_safe_name
-from ikanalyzer.templates import parts_matchers
+from ikanalyzer.templates import kill_matchers, parts_matchers
 from ikanalyzer.video import VideoFrame, read_metadata
 
 
@@ -181,7 +181,7 @@ def preprocess_kill_frame(frame: VideoFrame, debug=False) -> KillFrame:
 
     for kill_text_rect in kill_text_rects:
         fixed_size_text_region = crop_image(normalized_image, kill_text_rect)
-        match = parts_matchers.kill_text.match(fixed_size_text_region)
+        match = kill_matchers.kill_text.match(fixed_size_text_region)
         if match is not None:
             # Extract player name only by removing "をたおした!"
             cropped_text_region = fixed_size_text_region[:, : match.max_location[0]]

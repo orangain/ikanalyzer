@@ -23,9 +23,13 @@ class EventMatchers:
 
 
 @dataclasses.dataclass
-class PartsMatchers:
+class KillMatchers:
     kill: ImageMatcher
     kill_text: ImageMatcher
+
+
+@dataclasses.dataclass
+class PartsMatchers:
     result_local_player_marker: ImageMatcher
     result_area_draw: ImageMatcher
 
@@ -58,7 +62,7 @@ event_matchers = EventMatchers(
     ),
 )
 
-parts_matchers = PartsMatchers(
+kill_matchers = KillMatchers(
     kill=AutoRoiAbsDiffImageMatcher.load_from_file(
         os.path.join(templates_dir, "kill.png"),
         normalizer_fn=normalize_image,
@@ -67,6 +71,9 @@ parts_matchers = PartsMatchers(
         os.path.join(templates_dir, "kill_text.png"),
         normalizer_fn=normalize_image,
     ),
+)
+
+parts_matchers = PartsMatchers(
     result_local_player_marker=TemplateImageMatcher.load_from_file(
         os.path.join(templates_dir, "result_local_player_marker.png"), threshold=0.0
     ),
