@@ -11,7 +11,7 @@ from ikanalyzer.images import (
     crop_image,
     normalize_image,
 )
-from ikanalyzer.templates import event_matchers, matchers
+from ikanalyzer.templates import event_matchers, parts_matchers
 from ikanalyzer.video import VideoFrame, read_video, write_metadata
 
 logging.basicConfig(
@@ -165,9 +165,9 @@ def detect_kill_frame(frame: VideoFrame) -> KillFrame | None:
     kill_text_rect = (800, 995, 405, 45)
     normalized_image = normalize_image(frame.image)
 
-    if matchers.kill.match(normalized_image) is not None:
+    if parts_matchers.kill.match(normalized_image) is not None:
         fixed_size_text_region = crop_image(normalized_image, kill_text_rect)
-        if matchers.kill_text.match(fixed_size_text_region) is not None:
+        if parts_matchers.kill_text.match(fixed_size_text_region) is not None:
             return KillFrame(
                 type="kill",
                 image=frame.image,
