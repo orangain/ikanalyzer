@@ -35,10 +35,10 @@ def process_video(arg: Arg):
     last_frame_type: str | None = None
     start_frame: VideoFrame | None = None
 
-    def write_movie_if_possible(frame: VideoFrame, end_frame_adjust_seconds: float = 0):
+    def write_video_if_possible(frame: VideoFrame, end_frame_adjust_seconds: float = 0):
         nonlocal saved_count
         if start_frame is not None and (frame.second - start_frame.second) > 10:
-            write_movie(
+            write_video(
                 arg.output_dir,
                 arg.video_path,
                 start_frame.frame_number,
@@ -59,10 +59,10 @@ def process_video(arg: Arg):
             )
 
             if matched_frame_type == "opening":
-                write_movie_if_possible(frame, -5.0)
+                write_video_if_possible(frame, -5.0)
                 start_frame = frame
             elif matched_frame_type == "result" or matched_frame_type == "result_lobby":
-                write_movie_if_possible(frame, 1.0)
+                write_video_if_possible(frame, 1.0)
                 start_frame = None
 
         last_frame_type = matched_frame_type
@@ -70,7 +70,7 @@ def process_video(arg: Arg):
         if frame.frame_number % 100 == 0:
             logger.info(f"Processed {frame.frame_number} frames...")
     else:
-        write_movie_if_possible(frame)
+        write_video_if_possible(frame)
 
     logger.info(f"Saved {saved_count} videos.")
 
@@ -89,7 +89,7 @@ def process_frame(frame: cv2.typing.MatLike, frame_number: int) -> str | None:
     return None
 
 
-def write_movie(
+def write_video(
     output_dir: str,
     video_path: str,
     start_frame_number: int,
@@ -118,9 +118,9 @@ def write_movie(
 
     proc = subprocess.run(args)
     if proc.returncode != 0:
-        raise Exception(f"Failed to write movie: {output_path}")
+        raise Exception(f"Failed to write video: {output_path}")
 
-    logger.info(f"Movie written: {output_path}")
+    logger.info(f"Video written: {output_path}")
 
 
 if __name__ == "__main__":
