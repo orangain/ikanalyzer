@@ -35,7 +35,7 @@ def process_video(arg: Arg):
     last_frame_type: str | None = None
     start_frame: VideoFrame | None = None
 
-    def write_video_if_possible(frame: VideoFrame, end_frame_adjust_seconds: float = 0):
+    def write_video_if_in_game(frame: VideoFrame, end_frame_adjust_seconds: float = 0):
         nonlocal saved_count
         if start_frame is not None:
             write_video(
@@ -67,10 +67,10 @@ def process_video(arg: Arg):
             )
 
             if matched_frame_type == "opening":
-                write_video_if_possible(frame, -5.0)
+                write_video_if_in_game(frame, -5.0)
                 start_frame = frame
             elif matched_frame_type == "result" or matched_frame_type == "result_lobby":
-                write_video_if_possible(frame, 1.0)
+                write_video_if_in_game(frame, 1.0)
                 start_frame = None
 
         last_frame_type = matched_frame_type
@@ -78,7 +78,7 @@ def process_video(arg: Arg):
         if frame.frame_number % 100 == 0:
             logger.info(f"Processed {frame.frame_number} frames...")
     else:
-        write_video_if_possible(frame)
+        write_video_if_in_game(frame)
 
     logger.info(f"Saved {saved_count} videos.")
 
