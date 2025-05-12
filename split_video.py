@@ -37,7 +37,7 @@ def process_video(arg: Arg):
 
     def write_video_if_possible(frame: VideoFrame, end_frame_adjust_seconds: float = 0):
         nonlocal saved_count
-        if start_frame is not None and (frame.second - start_frame.second) > 10:
+        if start_frame is not None:
             write_video(
                 arg.output_dir,
                 arg.video_path,
@@ -51,6 +51,9 @@ def process_video(arg: Arg):
     logger.info(f"Video loaded: {arg.video_path}, fps: {video.fps}")
 
     for frame in video.frames(arg.frames_per_second):
+        if start_frame is not None and (frame.second - start_frame.second) < 20:
+            continue  # Skip frames until 20 seconds after the start frame
+
         matched_frame_type = process_frame(frame.image, frame.frame_number)
 
         if matched_frame_type != None and matched_frame_type != last_frame_type:
