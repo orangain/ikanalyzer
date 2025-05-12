@@ -54,12 +54,12 @@ def process_video(arg: Arg):
         if start_frame is not None and (frame.second - start_frame.second) < 20:
             continue  # Skip frames until 20 seconds after the start frame
 
-        frame_types = (
+        expected_frame_types = (
             ["opening", "result", "result_lobby"]
             if start_frame is not None
             else ["opening"]
         )
-        matched_frame_type = process_frame(frame.image, frame.frame_number, frame_types)
+        matched_frame_type = process_frame(frame, expected_frame_types)
 
         if matched_frame_type != None and matched_frame_type != last_frame_type:
             logger.info(
@@ -83,14 +83,12 @@ def process_video(arg: Arg):
     logger.info(f"Saved {saved_count} videos.")
 
 
-def process_frame(
-    frame: cv2.typing.MatLike, frame_number: int, frame_types: list[str]
-) -> str | None:
-    normalized_frame = normalize_image(frame)
+def process_frame(frame: VideoFrame, frame_types: list[str]) -> str | None:
+    normalized_image = normalize_image(frame.image)
 
     for frame_type in frame_types:
         matcher = event_matchers.get(frame_type)
-        if matcher.match(normalized_frame) is not None:
+        if matcher.match(normalized_image) is not None:
             return frame_type
 
     return None
