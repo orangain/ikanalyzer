@@ -1,13 +1,10 @@
 import dataclasses
+import logging
 import multiprocessing
 import os
 import subprocess
 import sys
 import datetime
-
-import cv2
-
-import logging
 
 from ikanalyzer.images import normalize_image
 from ikanalyzer.templates import event_matchers
