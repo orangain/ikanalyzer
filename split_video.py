@@ -39,6 +39,7 @@ def process_video(arg: Arg):
                 arg.output_dir,
                 arg.video_path,
                 start_frame.frame_number,
+                # Start 1 second before the start frame to include the opening animation
                 max(start_frame.second - 1.0, 0),
                 frame.second + end_frame_adjust_seconds,
             )
@@ -64,6 +65,8 @@ def process_video(arg: Arg):
             )
 
             if matched_frame_type == "opening":
+                # Finding an opening frame during a game means that the next match started without finding a result frame.
+                # In this case, 5 seconds before is considered to be the end of the previous game.
                 write_video_if_in_game(frame, -5.0)
                 start_frame = frame
             elif matched_frame_type == "result" or matched_frame_type == "result_lobby":
@@ -75,6 +78,7 @@ def process_video(arg: Arg):
         if frame.frame_number % 100 == 0:
             logger.info(f"Processed {frame.frame_number} frames...")
     else:
+        # If in a game, write the last part.
         write_video_if_in_game(frame)
 
     logger.info(f"Saved {saved_count} videos.")
