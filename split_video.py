@@ -39,7 +39,7 @@ def process_video(arg: Arg):
                 arg.output_dir,
                 arg.video_path,
                 start_frame.frame_number,
-                start_frame.second - 1.0,
+                max(start_frame.second - 1.0, 0),
                 frame.second + end_frame_adjust_seconds,
             )
             saved_count += 1
