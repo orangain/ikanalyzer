@@ -180,7 +180,7 @@ Output #0, mp4, to 'workspace/videos/IOHD0020_007389.MP4':
 Press [q] to stop, [?] for help
 [out#0/mp4 @ 0x60000230c000] video:714462KiB audio:11095KiB subtitle:0KiB other streams:0KiB global headers:0KiB muxing overhead: 0.032862%
 frame=10740 fps=0.0 q=-1.0 Lsize=  725795KiB time=00:10:04.70 bitrate=9832.4kbits/s speed=2.15e+03x    
-2025-05-06T19:52:39 [66336][INFO] Movie written: workspace/videos/IOHD0020_007389.MP4
+2025-05-06T19:52:39 [66336][INFO] Video written: workspace/videos/IOHD0020_007389.MP4
 ...
 2025-05-06T19:54:28 [66336][INFO] Saved 5 videos.
 ```

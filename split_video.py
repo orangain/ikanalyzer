@@ -1,13 +1,10 @@
 import dataclasses
+import logging
 import multiprocessing
 import os
 import subprocess
 import sys
 import datetime
-
-import cv2
-
-import logging
 
 from ikanalyzer.images import normalize_image
 from ikanalyzer.templates import event_matchers
@@ -35,14 +32,15 @@ def process_video(arg: Arg):
     last_frame_type: str | None = None
     start_frame: VideoFrame | None = None
 
-    def write_movie_if_possible(frame: VideoFrame, end_frame_adjust_seconds: float = 0):
+    def write_video_if_in_game(frame: VideoFrame, end_frame_adjust_seconds: float = 0):
         nonlocal saved_count
-        if start_frame is not None and (frame.second - start_frame.second) > 10:
-            write_movie(
+        if start_frame is not None:
+            write_video(
                 arg.output_dir,
                 arg.video_path,
                 start_frame.frame_number,
-                start_frame.second - 1.0,
+                # Start 1 second before the start frame to include the opening animation
+                max(start_frame.second - 1.0, 0),
                 frame.second + end_frame_adjust_seconds,
             )
             saved_count += 1
@@ -51,7 +49,15 @@ def process_video(arg: Arg):
     logger.info(f"Video loaded: {arg.video_path}, fps: {video.fps}")
 
     for frame in video.frames(arg.frames_per_second):
-        matched_frame_type = process_frame(frame.image, frame.frame_number)
+        if start_frame is not None and (frame.second - start_frame.second) < 20:
+            continue  # Skip frames until 20 seconds after the start frame
+
+        expected_frame_types = (
+            ["opening", "result", "result_lobby"]
+            if start_frame is not None
+            else ["opening"]
+        )
+        matched_frame_type = process_frame(frame, expected_frame_types)
 
         if matched_frame_type != None and matched_frame_type != last_frame_type:
             logger.info(
@@ -59,10 +65,12 @@ def process_video(arg: Arg):
             )
 
             if matched_frame_type == "opening":
-                write_movie_if_possible(frame, -5.0)
+                # Finding an opening frame during a game means that the next match started without finding a result frame.
+                # In this case, 5 seconds before is considered to be the end of the previous game.
+                write_video_if_in_game(frame, -5.0)
                 start_frame = frame
             elif matched_frame_type == "result" or matched_frame_type == "result_lobby":
-                write_movie_if_possible(frame, 1.0)
+                write_video_if_in_game(frame, 1.0)
                 start_frame = None
 
         last_frame_type = matched_frame_type
@@ -70,26 +78,24 @@ def process_video(arg: Arg):
         if frame.frame_number % 100 == 0:
             logger.info(f"Processed {frame.frame_number} frames...")
     else:
-        write_movie_if_possible(frame)
+        # If in a game, write the last part.
+        write_video_if_in_game(frame)
 
     logger.info(f"Saved {saved_count} videos.")
 
 
-frame_types = ["opening", "result", "result_lobby"]
-
-
-def process_frame(frame: cv2.typing.MatLike, frame_number: int) -> str | None:
-    normalized_frame = normalize_image(frame)
+def process_frame(frame: VideoFrame, frame_types: list[str]) -> str | None:
+    normalized_image = normalize_image(frame.image)
 
     for frame_type in frame_types:
         matcher = event_matchers.get(frame_type)
-        if matcher.match(normalized_frame) is not None:
+        if matcher.match(normalized_image) is not None:
             return frame_type
 
     return None
 
 
-def write_movie(
+def write_video(
     output_dir: str,
     video_path: str,
     start_frame_number: int,
@@ -118,9 +124,9 @@ def write_movie(
 
     proc = subprocess.run(args)
     if proc.returncode != 0:
-        raise Exception(f"Failed to write movie: {output_path}")
+        raise Exception(f"Failed to write video: {output_path}")
 
-    logger.info(f"Movie written: {output_path}")
+    logger.info(f"Video written: {output_path}")
 
 
 if __name__ == "__main__":
